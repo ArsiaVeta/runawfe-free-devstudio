@@ -6,7 +6,6 @@ import org.eclipse.swt.graphics.ImageLoader;
 import org.eclipse.swt.graphics.PaletteData;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.RGB;
-import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.graphics.Transform;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
@@ -63,10 +62,7 @@ public class SplashFlipProbe {
 
         System.out.println("rendered top pixel is red: " + renderedTopIsRed);
 
-        striped.dispose();
-        if (patched) {
-            toRender.dispose();
-        }
+        toRender.dispose();
         screen.dispose();
         display.dispose();
 
@@ -103,24 +99,22 @@ public class SplashFlipProbe {
         int major;
         try {
             major = Integer.parseInt(System.getProperty("os.version", "0").split("\\.")[0]);
-        } catch (NumberFormatException e) {
+        } catch (RuntimeException e) {
             return source;
         }
         if (major != 14) {
             return source;
         }
-        Rectangle bounds = source.getBounds();
-        Image copy = new Image(display, bounds.width, bounds.height);
-        GC gc = new GC(copy);
         Transform transform = new Transform(display);
+        GC gc = new GC(source);
         try {
             transform.setElements(1, 0, 0, -1, 0, 0);
             gc.setTransform(transform);
-            gc.drawImage(source, 0, -bounds.height);
+            gc.drawImage(source, 0, -source.getBounds().height);
         } finally {
             gc.dispose();
             transform.dispose();
         }
-        return copy;
+        return source;
     }
 }
