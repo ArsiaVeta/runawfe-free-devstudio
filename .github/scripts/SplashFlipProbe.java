@@ -26,6 +26,11 @@ public class SplashFlipProbe {
         Image striped = createStripedImage(display);
         Image patchedImage = applyFix(display, striped);
 
+        RGB rawTop = striped.getImageData().palette.getRGB(striped.getImageData().getPixel(WIDTH / 2, HEIGHT / 4));
+        RGB flippedTop = patchedImage.getImageData().palette.getRGB(patchedImage.getImageData().getPixel(WIDTH / 2, HEIGHT / 4));
+        System.out.println("raw striped top pixel rgb=" + rawTop);
+        System.out.println("raw patchedImage top pixel rgb=" + flippedTop);
+
         Composite asIs = new Composite(shell, SWT.NONE);
         asIs.setBounds(0, 0, WIDTH, HEIGHT);
         asIs.setBackgroundMode(SWT.INHERIT_FORCE);
