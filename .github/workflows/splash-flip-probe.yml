@@ -25,10 +25,12 @@ jobs:
 
       - run: javac -cp swt.jar -d . .github/scripts/SplashFlipProbe.java
 
-      - run: java -XstartOnFirstThread -cp .:swt.jar SplashFlipProbe
+      - run: java -XstartOnFirstThread -cp .:swt.jar SplashFlipProbe asis
+
+      - run: java -XstartOnFirstThread -cp .:swt.jar SplashFlipProbe patched
 
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: probe-result-${{ matrix.os }}
-          path: probe-result.png
+          path: probe-result-*.png

@@ -18,32 +18,28 @@ public class SplashFlipProbe {
     private static final int HEIGHT = 150;
 
     public static void main(String[] args) throws Exception {
+        String mode = args.length > 0 ? args[0] : "asis";
+        boolean patched = "patched".equals(mode);
+
         Display display = new Display();
         Shell shell = new Shell(display, SWT.NO_TRIM);
         shell.setLayout(null);
-        shell.setBounds(100, 100, WIDTH, HEIGHT * 2);
+        shell.setBounds(100, 100, WIDTH, HEIGHT);
 
         Image striped = createStripedImage(display);
-        Image patchedImage = applyFix(display, striped);
+        Image toRender = patched ? applyFix(display, striped) : striped;
 
-        RGB rawTop = striped.getImageData().palette.getRGB(striped.getImageData().getPixel(WIDTH / 2, HEIGHT / 4));
-        RGB flippedTop = patchedImage.getImageData().palette.getRGB(patchedImage.getImageData().getPixel(WIDTH / 2, HEIGHT / 4));
-        System.out.println("raw striped top pixel rgb=" + rawTop);
-        System.out.println("raw patchedImage top pixel rgb=" + flippedTop);
+        RGB rawTop = toRender.getImageData().palette.getRGB(toRender.getImageData().getPixel(WIDTH / 2, HEIGHT / 4));
+        System.out.println("mode=" + mode);
+        System.out.println("os.name=" + System.getProperty("os.name") + " os.version=" + System.getProperty("os.version"));
+        System.out.println("raw top pixel rgb=" + rawTop);
 
-        Composite asIs = new Composite(shell, SWT.NONE);
-        asIs.setBounds(0, 0, WIDTH, HEIGHT);
-        asIs.setBackgroundMode(SWT.INHERIT_FORCE);
-        asIs.setBackgroundImage(striped);
-
-        Composite patched = new Composite(shell, SWT.NONE);
-        patched.setBounds(0, HEIGHT, WIDTH, HEIGHT);
-        patched.setBackgroundMode(SWT.INHERIT_FORCE);
-        patched.setBackgroundImage(patchedImage);
+        Composite panel = new Composite(shell, SWT.NONE);
+        panel.setBounds(0, 0, WIDTH, HEIGHT);
+        panel.setBackgroundImage(toRender);
 
         shell.open();
-        asIs.redraw();
-        patched.redraw();
+        panel.redraw();
 
         long deadline = System.currentTimeMillis() + 3000;
         while (System.currentTimeMillis() < deadline) {
@@ -52,30 +48,29 @@ public class SplashFlipProbe {
             }
         }
 
-        Image screen = new Image(display, WIDTH, HEIGHT * 2);
+        Image screen = new Image(display, WIDTH, HEIGHT);
         GC screenGc = new GC(display);
         Point origin = shell.toDisplay(0, 0);
         screenGc.copyArea(screen, origin.x, origin.y);
         screenGc.dispose();
 
         ImageData snapshot = screen.getImageData();
-        boolean asIsTopIsRed = isRed(snapshot, WIDTH / 2, HEIGHT / 4);
-        boolean patchedTopIsRed = isRed(snapshot, WIDTH / 2, HEIGHT + HEIGHT / 4);
+        boolean renderedTopIsRed = isRed(snapshot, WIDTH / 2, HEIGHT / 4);
 
         ImageLoader loader = new ImageLoader();
         loader.data = new ImageData[] { snapshot };
-        loader.save("probe-result.png", SWT.IMAGE_PNG);
+        loader.save("probe-result-" + mode + ".png", SWT.IMAGE_PNG);
 
-        System.out.println("os.name=" + System.getProperty("os.name") + " os.version=" + System.getProperty("os.version"));
-        System.out.println("as-is top pixel is red: " + asIsTopIsRed);
-        System.out.println("patched top pixel is red: " + patchedTopIsRed);
+        System.out.println("rendered top pixel is red: " + renderedTopIsRed);
 
         striped.dispose();
-        patchedImage.dispose();
+        if (patched) {
+            toRender.dispose();
+        }
         screen.dispose();
         display.dispose();
 
-        if (!patchedTopIsRed) {
+        if (patched && !renderedTopIsRed) {
             System.exit(1);
         }
     }
